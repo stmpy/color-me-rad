@@ -4,71 +4,55 @@
  */
 
 get_header(); ?>
-
+<!-- <script type="text/javascript" src="<?php bloginfo('template_url'); ?>-child/bower_components/foundation/js/foundation/foundation.js"></script>
+<script type="text/javascript" src="<?php bloginfo('template_url'); ?>-child/bower_components/foundation/js/foundation/foundation.tab.js"></script> -->
+<script type="text/javascript" src="<?php bloginfo('template_url'); ?>-child/bower_components/underscore/underscore.js"></script>
+<script type="text/javascript" src="<?php bloginfo('template_url'); ?>-child/bower_components/backbone/backbone.js"></script>
+<script type="text/javascript" src="<?php bloginfo('template_url'); ?>-child/bower_components/marionette/lib/backbone.marionette.min.js"></script>
+<script type="text/javascript" src="<?php bloginfo('template_url'); ?>-child/bower_components/moment/moment.js"></script>
+<script type="text/javascript" src="<?php bloginfo('template_url'); ?>-child/app.js"></script>
 	<div id="primary" class="content-area">
-		<main id="main" class="site-main" role="main">
-			<header class="page-header">
-				<h1 class="page-title">
-					<?php the_title(); ?>
-				</h1>
-			</header><!-- .page-header -->
+		<main id="main" role="main">
+			<div class="row">
+				<header class="page-header">
+					<h1 class="page-title">
+						<?php the_title(); ?>
+					</h1>
+				</header><!-- .page-header -->
 
-			<?php
-				// Set up and call our Eventbrite query.
-				$events = new Eventbrite_Query( apply_filters( 'eventbrite_query_args', array(
-					'display_private' => true, // boolean
-					// 'limit' => null,            // integer
-					// 'organizer_id' => null,     // integer
-					// 'p' => null,                // integer
-					// 'post__not_in' => null,     // array of integers
-					// 'venue_id' => null,         // integer
-				) ) );
+				<dl class="tabs" data-tab>PUT TABS HERE</dl>
 
-				var_dump($events);
+				<div class="content">PUT CONTENT HERE</div>
 
-				if ( $events->have_posts() ) :
-					while ( $events->have_posts() ) : $events->the_post(); ?>
+				<?php
+					// Set up and call our Eventbrite query.
+					$events = new Eventbrite_Query( apply_filters( 'eventbrite_query_args', array(
+						'display_private' => true, // boolean
+						// 'limit' => null,            // integer
+						// 'organizer_id' => null,     // integer
+						// 'p' => null,                // integer
+						// 'post__not_in' => null,     // array of integers
+						// 'venue_id' => null,         // integer
+					) ) );
 
-						<article id="event-<?php the_ID(); ?>" <?php post_class(); ?>>
-							<header class="entry-header">
-								<?php //the_post_thumbnail(); ?>
+					if ( $events->have_posts() ) : ?>
+					<script type="text/javascript">
 
-								<?php the_title( sprintf( '<h1 class="entry-title"><a href="%s" rel="bookmark">', esc_url( get_permalink() ) ), '</a></h1>' ); ?>
+					App.start(<?= json_encode($events->posts); ?>);
+					</script>
 
-								<?php var_dump(eventbrite_event_venue()); ?>
-								<?= eventbrite_event_venue()->address->city?>, <?= eventbrite_event_venue()->address->region?><br/>
-								<?= date('m-d-y',eventbrite_event_start()->local); ?> | <a href="#">Sign Up</a>
-								<div class="entry-meta">
-									<?php //eventbrite_event_meta(); ?>
-								</div><!-- .entry-meta -->
-							</header><!-- .entry-header -->
+					<?php else :
+						// If no content, include the "No posts found" template.
+						get_template_part( 'content', 'none' );
 
-							<div class="entry-content">
-								<?php //eventbrite_ticket_form_widget(); ?>
-							</div><!-- .entry-content -->
+					endif;
 
-							<?php if ( current_user_can('manage_options') ): ?>
-							<footer class="entry-footer">
-								<?php eventbrite_edit_post_link( __( 'Edit', 'eventbrite_api' ), '<span class="edit-link">', '</span>' ); ?>
-							</footer><!-- .entry-footer -->
-							<?php endif; ?>
-						</article><!-- #post-## -->
+					// Return $post to its rightful owner.
+					wp_reset_postdata();
+				?>
 
-					<?php endwhile;
-
-					// Previous/next post navigation.
-					eventbrite_paging_nav( $events );
-
-				else :
-					// If no content, include the "No posts found" template.
-					get_template_part( 'content', 'none' );
-
-				endif;
-
-				// Return $post to its rightful owner.
-				wp_reset_postdata();
-			?>
-
+			</div>
+			<div style="clear:both"></div>
 		</main><!-- #main -->
 	</div><!-- #primary -->
 
