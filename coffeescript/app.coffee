@@ -5,13 +5,13 @@ App = new Marionette.Application
 		content: 'div.content'
 
 
-##     ##  #######  ########  ######## ##        ######  
-###   ### ##     ## ##     ## ##       ##       ##    ## 
-#### #### ##     ## ##     ## ##       ##       ##       
-## ### ## ##     ## ##     ## ######   ##        ######  
-##     ## ##     ## ##     ## ##       ##             ## 
-##     ## ##     ## ##     ## ##       ##       ##    ## 
-##     ##  #######  ########  ######## ########  ######  
+# ##     ##  #######  ########  ######## ##        ######  
+# ###   ### ##     ## ##     ## ##       ##       ##    ## 
+# #### #### ##     ## ##     ## ##       ##       ##       
+# ## ### ## ##     ## ##     ## ######   ##        ######  
+# ##     ## ##     ## ##     ## ##       ##             ## 
+# ##     ## ##     ## ##     ## ##       ##       ##    ## 
+# ##     ##  #######  ########  ######## ########  ######  
 
 
 Event = Backbone.Model.extend {}
@@ -21,13 +21,13 @@ Tab = Backbone.Model.extend {}
 Tabs = Backbone.Collection.extend model: Tab
 
 
-##     ## #### ######## ##      ##  ######  
-##     ##  ##  ##       ##  ##  ## ##    ## 
-##     ##  ##  ##       ##  ##  ## ##       
-##     ##  ##  ######   ##  ##  ##  ######  
- ##   ##   ##  ##       ##  ##  ##       ## 
-  ## ##    ##  ##       ##  ##  ## ##    ## 
-   ###    #### ########  ###  ###   ######  
+# ##     ## #### ######## ##      ##  ######  
+# ##     ##  ##  ##       ##  ##  ## ##    ## 
+# ##     ##  ##  ##       ##  ##  ## ##       
+# ##     ##  ##  ######   ##  ##  ##  ######  
+#  ##   ##   ##  ##       ##  ##  ##       ## 
+#   ## ##    ##  ##       ##  ##  ## ##    ## 
+#    ###    #### ########  ###  ###   ######  
 
 
 TabView = Marionette.ItemView.extend
@@ -50,7 +50,7 @@ EventView = Marionette.ItemView.extend
 	className: 'eventbrite-event'
 	template: _.template '
 		<strong style="text-transform:uppercase;"><%= venue.address.city %>, <%= venue.address.region %></strong><br/>
-		<%= moment(start.local,moment.ISO_8601).format("MM-DD-YY") %> | <a href="#">Sign Up</a>
+		<%= moment(start.local,moment.ISO_8601).format("MM-DD-YY") %> | <a href="?event_id=<%= ID %>">Sign Up</a>
 	'
 	# initialize: ->
 	# 	console.log @model.attributes
@@ -60,13 +60,13 @@ ThirdColumnView = Marionette.CollectionView.extend
 	childView: EventView
 
 
-##          ###    ##    ##  #######  ##     ## ########  ######  
-##         ## ##    ##  ##  ##     ## ##     ##    ##    ##    ## 
-##        ##   ##    ####   ##     ## ##     ##    ##    ##       
-##       ##     ##    ##    ##     ## ##     ##    ##     ######  
-##       #########    ##    ##     ## ##     ##    ##          ## 
-##       ##     ##    ##    ##     ## ##     ##    ##    ##    ## 
-######## ##     ##    ##     #######   #######     ##     ######  
+# ##          ###    ##    ##  #######  ##     ## ########  ######  
+# ##         ## ##    ##  ##  ##     ## ##     ##    ##    ##    ## 
+# ##        ##   ##    ####   ##     ## ##     ##    ##    ##       
+# ##       ##     ##    ##    ##     ## ##     ##    ##     ######  
+# ##       #########    ##    ##     ## ##     ##    ##          ## 
+# ##       ##     ##    ##    ##     ## ##     ##    ##    ##    ## 
+# ######## ##     ##    ##     #######   #######     ##     ######  
 
 ColumnLayout = Marionette.LayoutView.extend
 	className: 'row'
@@ -87,38 +87,106 @@ ColumnLayout = Marionette.LayoutView.extend
 				collection: new Events group).render().el
 
 CategoryLayout = Marionette.LayoutView.extend
-	template: _.template("")
+	template: _.template ''
 	onRender: ->
 		self = this
 		_.each @getOption('categories'), (group,category) ->
 			
-			self.$el.prepend "<h4>" + category + "</h4>", (new ColumnLayout column_count: 3, columns: _.groupBy group, (event,i) ->
+			self.$el.prepend "<div class='row'><div class='large-12 columns'>" + category + "</div></div>", (new ColumnLayout column_count: 3, columns: _.groupBy group, (event,i) ->
 				(parseInt i / (group.length / 3))).render().el
 
-   ###    ########  ########  
-  ## ##   ##     ## ##     ## 
- ##   ##  ##     ## ##     ## 
-##     ## ########  ########  
-######### ##        ##        
-##     ## ##        ##        
-##     ## ##        ##        
+MapLayout = Marionette.LayoutView.extend
+	template: _.template '<div id="map-canvas" class="google-map-large large-12 columns"></div>'
+	className: 'map-layout row'
+	markers: []
+
+	onRender: ->
+
+		self = this
+		styles = [
+			stylers: [ { hue: "#dfecf1" }, { saturation: 40 } ]
+		,
+			featureType: "road",
+			elementType: "geometry",
+			stylers: [ { lightness: 100 }, { visibility: "simplified" } ]
+		,
+			featureType: "road",
+			elementType: "labels",
+			stylers: [ { visibility: "off" } ]
+		]
+
+		if _.isUndefined(@map)
+			styledMap = new google.maps.StyledMapType styles, { name: "color me rad" }
+			console.log @$('#map-canvas').attr('height')
+			@map = new google.maps.Map @$('#map-canvas')[0],
+				zoom: 4
+				center: new google.maps.LatLng(37.09024, -95.712891);
+				mapTypeControlOptions:
+					mapTypeIds: [ google.maps.MapTypeId.ROADMAP, 'map_style']
+
+			@map.mapTypes.set 'map_style', styledMap
+			@map.setMapTypeId 'map_style'
+
+		# google.maps.event.trigger(@map, "resize")
+
+		@_geoLocate()
+
+		@getOption('evnts').each (event) ->
+			self.drawMarker new google.maps.LatLng parseFloat(event.get('venue').latitude), parseFloat(event.get('venue').longitude)
+
+	drawMarker: (location) ->
+
+		@markers.push new google.maps.Marker
+			map: @map
+			position: location
+			animation: google.maps.Animation.DROP
+
+	# Method 1 Geolocation API
+	_geoLocate: ->
+		# Get visitor location
+		# https://developer.mozilla.org/en-US/docs/Web/API/Geolocation.getCurrentPosition
+		unless _.isUndefined(navigator.geolocation.getCurrentPosition)
+			self = this
+			navigator.geolocation.getCurrentPosition (position) ->
+				self._setMyLocation position.coords.latitude, position.coords.longitude
+			, (error) -> self._ipLocate()
+
+	# Method 2 IP lookup
+	_ipLocate: ->
+		# https://ipinfo.io
+		jQuery.ajax "http://ipinfo.io", 
+			context: this
+			success: (location) ->
+				lat_lng = location.loc.split(',')
+				@_setMyLocation parseFloat(lat_lng[0]), parseFloat(lat_lng[1])
+			dataType: "jsonp"
+
+	_setMyLocation: (lat,lng) ->
+		myLocation = new google.maps.LatLng parseFloat(lat), parseFloat(lng)
+		@map.setCenter myLocation
+		@map.setZoom 8
+		# @drawMarker myLocation
+
+#    ###    ########  ########
+#   ## ##   ##     ## ##     ##
+#  ##   ##  ##     ## ##     ##
+# ##     ## ########  ########
+# ######### ##        ##
+# ##     ## ##        ##
+# ##     ## ##        ##
 
 
 Controller = Marionette.Controller.extend
 	upcoming: ->
-		grouped_by_date = App.events['by_date'].groupBy (ev,i) -> moment(ev.get('start').local).format("MMMM YYYY")
-		App.content.show new CategoryLayout categories: grouped_by_date
+		grouped_byDate = App.events['byDate'].groupBy (ev,i) -> moment(ev.get('start').local).format("MMMM YYYY")
+		App.content.show new CategoryLayout categories: grouped_byDate
 
 	alphabetical: ->
-		grouped_by_city = App.events['by_date'].groupBy (ev,i) -> ev.get('venue').address.city.substr(0,1)
-		App.content.show new CategoryLayout categories: grouped_by_city
+		grouped_byCity = App.events['byDate'].groupBy (ev,i) -> ev.get('venue').address.city.substr(0,1)
+		App.content.show new CategoryLayout categories: grouped_byCity
 
 	nearby: ->
-		@_show 'by_proximity'
-
-	_show: (list) ->
-		App.content.show new ColumnLayout column_count: 3, columns: App.events[list].groupBy (event,i) ->
-			(parseInt i / (App.events[list].length / 3))
+		App.content.show new MapLayout evnts: App.events['noSort']
 
 Router = Marionette.AppRouter.extend
 	appRoutes:
@@ -131,15 +199,17 @@ App.addInitializer (events) ->
 	# Create collection of events
 	# DEBUG -- START
 	# grow the list of events by a LOT
-	_.times 4, ->
-		events = _.each events, (event) ->
-			events.push(event)
+	# _.times 4, ->
+	# 	events = _.each events, (event) ->
+	# 		events.push(event)
 	# DEBUG -- END
+	
+	console.log events
 
 	@events =
-		by_date: new Events _.sortBy events, (ev) -> ev.start.local
-		by_city: new Events _.sortBy events, (ev) -> -ev.venue.address.city.substr(0,1)
-		by_proxity: new Events _.sortBy events, 'venue.address.latitude'
+		byDate: new Events _.sortBy events, (ev) -> ev.start.local
+		byCity: new Events _.sortBy events, (ev) -> -ev.venue.address.city.substr(0,1)
+		noSort: new Events events
 
 	@router = new Router
 		controller: new Controller

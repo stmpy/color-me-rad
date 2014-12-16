@@ -54,10 +54,27 @@ body[data\-smooth\-scrolling="0"] {
 	overflow: auto;
 }
 
+.content {
+	background-color: $body-bg;
+	padding: 10px;
+}
+
 .eventbrite-event {
 	margin: 15px 0;
 	h4 {
 		margin-bottom:0;
 		line-height:20px;
 	}
+}
+
+// .map-layout {
+// 	height: 800px;
+// }
+
+.google-map-large {
+	height: 800px;
+}
+
+img {
+	max-width: none;
 }
