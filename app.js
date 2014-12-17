@@ -2,9 +2,7 @@ var App, CategoryLayout, ColumnLayout, Controller, Event, EventView, Events, Map
 
 App = new Marionette.Application({
   regions: {
-    application: '#main',
-    tabs: 'dl.tabs',
-    content: 'div.content'
+    application: '.main-content'
   }
 });
 
@@ -20,26 +18,29 @@ Tabs = Backbone.Collection.extend({
   model: Tab
 });
 
-TabView = Marionette.ItemView.extend({
-  tagName: 'dd',
-  className: function() {
-    if (this.model.get('href') === Backbone.history.fragment) {
-      return 'active';
-    }
-    return '';
-  },
-  template: _.template('<a href="#/<%= href %>"><%= name %></a>')
-});
+TabView = Marionette.ItemView.extend({});
 
 TabsView = Marionette.CollectionView.extend({
-  tagName: 'dl',
-  className: 'right',
-  childView: TabView,
   events: {
-    'click dd': 'changeTab'
+    'click li > a': 'ohHell'
   },
-  changeTab: function(ev, el) {
-    return this.$(ev.target).parent().addClass('active').siblings().removeClass('active');
+  ohHell: function(event) {
+    return console.log((this.collection.findWhere({
+      tab_id: this.$(event.currentTarget).attr('href')
+    })).attributes);
+  },
+  initialize: function() {
+    var self;
+    self = this;
+    console.log(this.el);
+    this.$el.find('li > a').each(function(i, el) {
+      return (self.collection.findWhere({
+        name: self.$(el).html()
+      })).set('tab_id', self.$(el).attr('href'));
+    });
+    return this.collection.each(function(tab) {
+      return console.log(tab.attributes);
+    });
   }
 });
 
@@ -188,27 +189,17 @@ MapLayout = Marionette.LayoutView.extend({
 Controller = Marionette.Controller.extend({
   upcoming: function() {
     var grouped_byDate;
-    grouped_byDate = App.events['byDate'].groupBy(function(ev, i) {
+    return grouped_byDate = App.events['byDate'].groupBy(function(ev, i) {
       return moment(ev.get('start').local).format("MMMM YYYY");
     });
-    return App.content.show(new CategoryLayout({
-      categories: grouped_byDate
-    }));
   },
   alphabetical: function() {
     var grouped_byCity;
-    grouped_byCity = App.events['byDate'].groupBy(function(ev, i) {
+    return grouped_byCity = App.events['byDate'].groupBy(function(ev, i) {
       return ev.get('venue').address.city.substr(0, 1);
     });
-    return App.content.show(new CategoryLayout({
-      categories: grouped_byCity
-    }));
   },
-  nearby: function() {
-    return App.content.show(new MapLayout({
-      evnts: App.events['noSort']
-    }));
-  }
+  nearby: function() {}
 });
 
 Router = Marionette.AppRouter.extend({
@@ -220,7 +211,6 @@ Router = Marionette.AppRouter.extend({
 });
 
 App.addInitializer(function(events) {
-  console.log(events);
   this.events = {
     byDate: new Events(_.sortBy(events, function(ev) {
       return ev.start.local;
@@ -237,18 +227,19 @@ App.addInitializer(function(events) {
   if (Backbone.history.fragment === "") {
     this.router.navigate("#/upcoming");
   }
-  return this.tabs.show(new TabsView({
+  return new TabsView({
+    el: '.ui-tabs-nav',
     collection: new Tabs([
       {
-        href: 'upcoming',
-        name: 'Upcoming'
+        name: 'Upcoming',
+        tab: '#upcoming-tab'
       }, {
-        href: 'alphabetical',
-        name: 'Alphabetical'
+        name: 'Alphabetical',
+        tab: '#alphabetical-tab'
       }, {
-        href: 'nearby',
-        name: 'Nearby'
+        name: 'Nearby',
+        tab: '#nearby-tab'
       }
     ])
-  }));
+  });
 });

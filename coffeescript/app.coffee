@@ -1,8 +1,6 @@
 App = new Marionette.Application
 	regions:
-		application: '#main'
-		tabs: 'dl.tabs'
-		content: 'div.content'
+		application: '.main-content'
 
 
 # ##     ##  #######  ########  ######## ##        ######  
@@ -30,21 +28,22 @@ Tabs = Backbone.Collection.extend model: Tab
 #    ###    #### ########  ###  ###   ######  
 
 
-TabView = Marionette.ItemView.extend
-	tagName: 'dd'
-	className: ->
-		return 'active' if @model.get('href') is Backbone.history.fragment
-		''
-	template: _.template('<a href="#/<%= href %>"><%= name %></a>')
+TabView = Marionette.ItemView.extend {}
 
 TabsView = Marionette.CollectionView.extend
-	tagName: 'dl'
-	className: 'right'
-	childView: TabView
 	events:
-		'click dd': 'changeTab'
+		'click li > a': 'ohHell'
+	ohHell: (event) ->
+		console.log (@collection.findWhere { tab_id: @$(event.currentTarget).attr('href') } ).attributes
+	initialize: ->
+		self = this
+		console.log @el
+		@$el.find('li > a').each (i,el) ->
+			(self.collection.findWhere { name: self.$(el).html() }).set 'tab_id', self.$(el).attr('href')
+		@collection.each (tab) ->
+			console.log tab.attributes
+	# childViewOptions: (child) ->
 
-	changeTab: (ev,el) -> @$(ev.target).parent().addClass('active').siblings().removeClass('active')
 
 EventView = Marionette.ItemView.extend
 	className: 'eventbrite-event'
@@ -179,14 +178,14 @@ MapLayout = Marionette.LayoutView.extend
 Controller = Marionette.Controller.extend
 	upcoming: ->
 		grouped_byDate = App.events['byDate'].groupBy (ev,i) -> moment(ev.get('start').local).format("MMMM YYYY")
-		App.content.show new CategoryLayout categories: grouped_byDate
+		# App.content.show new CategoryLayout categories: grouped_byDate
 
 	alphabetical: ->
 		grouped_byCity = App.events['byDate'].groupBy (ev,i) -> ev.get('venue').address.city.substr(0,1)
-		App.content.show new CategoryLayout categories: grouped_byCity
+		# App.content.show new CategoryLayout categories: grouped_byCity
 
 	nearby: ->
-		App.content.show new MapLayout evnts: App.events['noSort']
+		# App.content.show new MapLayout evnts: App.events['noSort']
 
 Router = Marionette.AppRouter.extend
 	appRoutes:
@@ -204,7 +203,7 @@ App.addInitializer (events) ->
 	# 		events.push(event)
 	# DEBUG -- END
 	
-	console.log events
+	# console.log events
 
 	@events =
 		byDate: new Events _.sortBy events, (ev) -> ev.start.local
@@ -221,14 +220,15 @@ App.addInitializer (events) ->
 		@router.navigate "#/upcoming"
 
 	# Add navigation
-	@tabs.show new TabsView
+	new TabsView
+		el: '.ui-tabs-nav'
 		collection: new Tabs [
-			href: 'upcoming'
 			name: 'Upcoming'
+			tab: '#upcoming-tab'
 		,
-			href: 'alphabetical'
 			name: 'Alphabetical'
+			tab: '#alphabetical-tab'
 		,
-			href: 'nearby'
 			name: 'Nearby'
+			tab: '#nearby-tab'
 		]

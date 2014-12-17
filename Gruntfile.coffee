@@ -15,7 +15,11 @@ module.exports = (grunt) ->
       app:
         options:
           loadPath: "./bower_components/foundation/scss"
-        files: "./style.css": ["./scss/style.scss"]
+        expand: true
+        cwd: "./scss"
+        src: ["*.scss", "!_*.scss"]
+        dest: "./"
+        ext: ".css"
 
     watch:
       coffeescript:

@@ -3,9 +3,13 @@
  * Template Name: Color Me Rad Eventbrite Events
  */
 
-get_header(); ?>
+get_header();
+
+nectar_page_header($post->ID); ?>
+
 <!-- <script type="text/javascript" src="<?php bloginfo('template_url'); ?>-child/bower_components/foundation/js/foundation/foundation.js"></script>
 <script type="text/javascript" src="<?php bloginfo('template_url'); ?>-child/bower_components/foundation/js/foundation/foundation.tab.js"></script> -->
+<!-- <link type="text/css" rel="stylesheet" href="<?php bloginfo('template_url'); ?>-child/events.css" /> -->
 <script type="text/javascript" src="<?php bloginfo('template_url'); ?>-child/bower_components/underscore/underscore.js"></script>
 <script type="text/javascript" src="<?php bloginfo('template_url'); ?>-child/bower_components/backbone/backbone.js"></script>
 <script type="text/javascript" src="<?php bloginfo('template_url'); ?>-child/bower_components/marionette/lib/backbone.marionette.min.js"></script>
@@ -41,44 +45,6 @@ get_header(); ?>
 
 				// Return $post to its rightful owner.
 				wp_reset_postdata();
-			else: ?>
-				<header class="page-header">
-					<h1 class="page-title">
-						<?php the_title(); ?>
-					</h1>
-					<?php
-					// apply_filters( 'query_vars', array('event_id') ); ?>
-				</header><!-- .page-header -->
-
-				<dl class="tabs" data-tab>PUT TABS HERE</dl>
-
-				<div class="content">Error retrieving events ... </div>
-
-				<?php
-					// Set up and call our Eventbrite query.
-					$events = new Eventbrite_Query( apply_filters( 'eventbrite_query_args', array(
-						'display_private' => true, // boolean
-						// 'limit' => null,            // integer
-						// 'organizer_id' => null,     // integer
-						// 'p' => null,                // integer
-						// 'post__not_in' => null,     // array of integers
-						// 'venue_id' => null,         // integer
-					) ) );
-
-					if ( $events->have_posts() ) : ?>
-					<script type="text/javascript" src="<?php bloginfo('template_url'); ?>-child/app.js"></script>
-						<script type="text/javascript">
-						App.start(<?= json_encode($events->posts); ?>);
-						</script>
-
-					<?php else :
-						// If no content, include the "No posts found" template.
-						get_template_part( 'content', 'none' );
-
-					endif;
-
-					// Return $post to its rightful owner.
-					wp_reset_postdata();
 			endif; ?>
 
 		</main><!-- #main -->
