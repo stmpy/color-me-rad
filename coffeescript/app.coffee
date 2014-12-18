@@ -34,28 +34,47 @@ TabsView = Marionette.CollectionView.extend
 	events:
 		'click li > a': 'ohHell'
 	ohHell: (event) ->
-		console.log (@collection.findWhere { tab_id: @$(event.currentTarget).attr('href') } ).attributes
+		tab = @collection.findWhere { tab_id: @$(event.currentTarget).attr('href') }
+		return if tab.get 'activated'
+		tab.set 'activated', true
+		App.controller[tab.get 'param']()
+
 	initialize: ->
 		self = this
-		console.log @el
 		@$el.find('li > a').each (i,el) ->
-			(self.collection.findWhere { name: self.$(el).html() }).set 'tab_id', self.$(el).attr('href')
+			$tab = self.$(el)
+			$content = self.$($tab.attr('href')).find('[id^=eventbrite]')
+			[eventbrite, action, param] = $content.attr('id').split('-',3)
+			tab = new Tab { name: $tab.html(), tab_id: $tab.attr('href'), action: action, param: param, content: $content.attr('id'), activated: false }
+			self.collection.add tab
+			region = {}
+			region[tab.get('param')] = '#' + tab.get('content')
+			App.addRegions region
+
 		@collection.each (tab) ->
+
 			console.log tab.attributes
 	# childViewOptions: (child) ->
 
 
 EventView = Marionette.ItemView.extend
 	className: 'eventbrite-event'
-	template: _.template '
-		<strong style="text-transform:uppercase;"><%= venue.address.city %>, <%= venue.address.region %></strong><br/>
-		<%= moment(start.local,moment.ISO_8601).format("MM-DD-YY") %> | <a href="?event_id=<%= ID %>">Sign Up</a>
-	'
+	template: _.template '<span class="eventbrite-list-venue-name">' +
+			'<%= venue.address.city %>, <%= venue.address.region %>' +
+		'</span><br/>' +
+		'<span class="eventbrite-list-start">' + 
+			'<%= moment(start.local,moment.ISO_8601).format("MM-DD-YY") %>' + 
+		'</span>' + ' | ' +
+		'<a href="?event_id=<%= ID %>">' + 
+			'<span class="eventbrite-list-sign-up">' + 
+				'Sign Up' + 
+			'</span>' + 
+		'</a>'
 	# initialize: ->
 	# 	console.log @model.attributes
 
 ThirdColumnView = Marionette.CollectionView.extend
-	className: 'medium-4 small-6 columns'
+	className: 'vc_span4 wpb_column column_container col no-extra-padding'
 	childView: EventView
 
 
@@ -68,7 +87,7 @@ ThirdColumnView = Marionette.CollectionView.extend
 # ######## ##     ##    ##     #######   #######     ##     ######  
 
 ColumnLayout = Marionette.LayoutView.extend
-	className: 'row'
+	className: 'vc_row-fluid'
 	regions:
 		column1: '#column1'
 		column2: '#column2'
@@ -91,12 +110,12 @@ CategoryLayout = Marionette.LayoutView.extend
 		self = this
 		_.each @getOption('categories'), (group,category) ->
 			
-			self.$el.prepend "<div class='row'><div class='large-12 columns'>" + category + "</div></div>", (new ColumnLayout column_count: 3, columns: _.groupBy group, (event,i) ->
+			self.$el.prepend "<div class='vc_row-fluid'><div class='vc_span12 col'><h4 class='eventbrite-category-title'>" + category + "</h4></div></div>", (new ColumnLayout column_count: 3, columns: _.groupBy group, (event,i) ->
 				(parseInt i / (group.length / 3))).render().el
 
 MapLayout = Marionette.LayoutView.extend
-	template: _.template '<div id="map-canvas" class="google-map-large large-12 columns"></div>'
-	className: 'map-layout row'
+	template: _.template '<div id="map-canvas" class="google-map-large vc_span12 col"></div>'
+	className: 'eventbrite-list-map row'
 	markers: []
 
 	onRender: ->
@@ -178,20 +197,14 @@ MapLayout = Marionette.LayoutView.extend
 Controller = Marionette.Controller.extend
 	upcoming: ->
 		grouped_byDate = App.events['byDate'].groupBy (ev,i) -> moment(ev.get('start').local).format("MMMM YYYY")
-		# App.content.show new CategoryLayout categories: grouped_byDate
+		App.upcoming.show new CategoryLayout categories: grouped_byDate
 
 	alphabetical: ->
 		grouped_byCity = App.events['byDate'].groupBy (ev,i) -> ev.get('venue').address.city.substr(0,1)
-		# App.content.show new CategoryLayout categories: grouped_byCity
+		App.alphabetical.show new CategoryLayout categories: grouped_byCity
 
 	nearby: ->
-		# App.content.show new MapLayout evnts: App.events['noSort']
-
-Router = Marionette.AppRouter.extend
-	appRoutes:
-		'upcoming(/)': 'upcoming'
-		'alphabetical(/)': 'alphabetical'
-		'nearby(/)': 'nearby'
+		App.nearby.show new MapLayout evnts: App.events['noSort']
 
 App.addInitializer (events) ->
 
@@ -210,25 +223,17 @@ App.addInitializer (events) ->
 		byCity: new Events _.sortBy events, (ev) -> -ev.venue.address.city.substr(0,1)
 		noSort: new Events events
 
-	@router = new Router
-		controller: new Controller
+	# @router = new Router
+	# 	controller: new Controller
+	@controller = new Controller
 
 	# start navigation
-	Backbone.history.start()
+	# Backbone.history.start()
 
-	if Backbone.history.fragment is ""
-		@router.navigate "#/upcoming"
+	# if Backbone.history.fragment is ""
+	# 	@router.navigate "#/upcoming"
 
 	# Add navigation
 	new TabsView
-		el: '.ui-tabs-nav'
-		collection: new Tabs [
-			name: 'Upcoming'
-			tab: '#upcoming-tab'
-		,
-			name: 'Alphabetical'
-			tab: '#alphabetical-tab'
-		,
-			name: 'Nearby'
-			tab: '#nearby-tab'
-		]
+		el: '.tabbed'
+		collection: new Tabs

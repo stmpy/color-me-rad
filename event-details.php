@@ -1,6 +1,6 @@
 <?php
 /**
- * Template Name: Color Me Rad Eventbrite Events
+ * Template Name: Eventbrite API: Event Details
  */
 
 get_header();

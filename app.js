@@ -1,4 +1,4 @@
-var App, CategoryLayout, ColumnLayout, Controller, Event, EventView, Events, MapLayout, Router, Tab, TabView, Tabs, TabsView, ThirdColumnView;
+var App, CategoryLayout, ColumnLayout, Controller, Event, EventView, Events, MapLayout, Tab, TabView, Tabs, TabsView, ThirdColumnView;
 
 App = new Marionette.Application({
   regions: {
@@ -25,18 +25,36 @@ TabsView = Marionette.CollectionView.extend({
     'click li > a': 'ohHell'
   },
   ohHell: function(event) {
-    return console.log((this.collection.findWhere({
+    var tab;
+    tab = this.collection.findWhere({
       tab_id: this.$(event.currentTarget).attr('href')
-    })).attributes);
+    });
+    if (tab.get('activated')) {
+      return;
+    }
+    tab.set('activated', true);
+    return App.controller[tab.get('param')]();
   },
   initialize: function() {
     var self;
     self = this;
-    console.log(this.el);
     this.$el.find('li > a').each(function(i, el) {
-      return (self.collection.findWhere({
-        name: self.$(el).html()
-      })).set('tab_id', self.$(el).attr('href'));
+      var $content, $tab, action, eventbrite, param, region, tab, _ref;
+      $tab = self.$(el);
+      $content = self.$($tab.attr('href')).find('[id^=eventbrite]');
+      _ref = $content.attr('id').split('-', 3), eventbrite = _ref[0], action = _ref[1], param = _ref[2];
+      tab = new Tab({
+        name: $tab.html(),
+        tab_id: $tab.attr('href'),
+        action: action,
+        param: param,
+        content: $content.attr('id'),
+        activated: false
+      });
+      self.collection.add(tab);
+      region = {};
+      region[tab.get('param')] = '#' + tab.get('content');
+      return App.addRegions(region);
     });
     return this.collection.each(function(tab) {
       return console.log(tab.attributes);
@@ -46,16 +64,16 @@ TabsView = Marionette.CollectionView.extend({
 
 EventView = Marionette.ItemView.extend({
   className: 'eventbrite-event',
-  template: _.template('<strong style="text-transform:uppercase;"><%= venue.address.city %>, <%= venue.address.region %></strong><br/> <%= moment(start.local,moment.ISO_8601).format("MM-DD-YY") %> | <a href="?event_id=<%= ID %>">Sign Up</a>')
+  template: _.template('<span class="eventbrite-list-venue-name">' + '<%= venue.address.city %>, <%= venue.address.region %>' + '</span><br/>' + '<span class="eventbrite-list-start">' + '<%= moment(start.local,moment.ISO_8601).format("MM-DD-YY") %>' + '</span>' + ' | ' + '<a href="?event_id=<%= ID %>">' + '<span class="eventbrite-list-sign-up">' + 'Sign Up' + '</span>' + '</a>')
 });
 
 ThirdColumnView = Marionette.CollectionView.extend({
-  className: 'medium-4 small-6 columns',
+  className: 'vc_span4 wpb_column column_container col no-extra-padding',
   childView: EventView
 });
 
 ColumnLayout = Marionette.LayoutView.extend({
-  className: 'row',
+  className: 'vc_row-fluid',
   regions: {
     column1: '#column1',
     column2: '#column2',
@@ -83,7 +101,7 @@ CategoryLayout = Marionette.LayoutView.extend({
     var self;
     self = this;
     return _.each(this.getOption('categories'), function(group, category) {
-      return self.$el.prepend("<div class='row'><div class='large-12 columns'>" + category + "</div></div>", (new ColumnLayout({
+      return self.$el.prepend("<div class='vc_row-fluid'><div class='vc_span12 col'><h4 class='eventbrite-category-title'>" + category + "</h4></div></div>", (new ColumnLayout({
         column_count: 3,
         columns: _.groupBy(group, function(event, i) {
           return parseInt(i / (group.length / 3));
@@ -94,8 +112,8 @@ CategoryLayout = Marionette.LayoutView.extend({
 });
 
 MapLayout = Marionette.LayoutView.extend({
-  template: _.template('<div id="map-canvas" class="google-map-large large-12 columns"></div>'),
-  className: 'map-layout row',
+  template: _.template('<div id="map-canvas" class="google-map-large vc_span12 col"></div>'),
+  className: 'eventbrite-list-map row',
   markers: [],
   onRender: function() {
     var self, styledMap, styles;
@@ -189,24 +207,26 @@ MapLayout = Marionette.LayoutView.extend({
 Controller = Marionette.Controller.extend({
   upcoming: function() {
     var grouped_byDate;
-    return grouped_byDate = App.events['byDate'].groupBy(function(ev, i) {
+    grouped_byDate = App.events['byDate'].groupBy(function(ev, i) {
       return moment(ev.get('start').local).format("MMMM YYYY");
     });
+    return App.upcoming.show(new CategoryLayout({
+      categories: grouped_byDate
+    }));
   },
   alphabetical: function() {
     var grouped_byCity;
-    return grouped_byCity = App.events['byDate'].groupBy(function(ev, i) {
+    grouped_byCity = App.events['byDate'].groupBy(function(ev, i) {
       return ev.get('venue').address.city.substr(0, 1);
     });
+    return App.alphabetical.show(new CategoryLayout({
+      categories: grouped_byCity
+    }));
   },
-  nearby: function() {}
-});
-
-Router = Marionette.AppRouter.extend({
-  appRoutes: {
-    'upcoming(/)': 'upcoming',
-    'alphabetical(/)': 'alphabetical',
-    'nearby(/)': 'nearby'
+  nearby: function() {
+    return App.nearby.show(new MapLayout({
+      evnts: App.events['noSort']
+    }));
   }
 });
 
@@ -220,26 +240,9 @@ App.addInitializer(function(events) {
     })),
     noSort: new Events(events)
   };
-  this.router = new Router({
-    controller: new Controller
-  });
-  Backbone.history.start();
-  if (Backbone.history.fragment === "") {
-    this.router.navigate("#/upcoming");
-  }
+  this.controller = new Controller;
   return new TabsView({
-    el: '.ui-tabs-nav',
-    collection: new Tabs([
-      {
-        name: 'Upcoming',
-        tab: '#upcoming-tab'
-      }, {
-        name: 'Alphabetical',
-        tab: '#alphabetical-tab'
-      }, {
-        name: 'Nearby',
-        tab: '#nearby-tab'
-      }
-    ])
+    el: '.tabbed',
+    collection: new Tabs
   });
 });

@@ -1,28 +1,18 @@
-<?php get_header(); ?>
+<?php
+/**
+ * Template Name: Eventbrite API: Event List
+ */
 
-<?php nectar_page_header($post->ID); ?>
+// load salient page
+require_once(dirname(__FILE__) . "/../salient/page.php");
+?>
 
 <script type="text/javascript" src="<?php bloginfo('template_url'); ?>-child/bower_components/underscore/underscore.js"></script>
 <script type="text/javascript" src="<?php bloginfo('template_url'); ?>-child/bower_components/backbone/backbone.js"></script>
 <script type="text/javascript" src="<?php bloginfo('template_url'); ?>-child/bower_components/marionette/lib/backbone.marionette.min.js"></script>
 <script type="text/javascript" src="<?php bloginfo('template_url'); ?>-child/bower_components/moment/moment.js"></script>
 <script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?region=US&key=AIzaSyAG2HmH0IQyQA6P2yc1oakjIfibDWr8kGM"></script>
-<div class="container-wrap">
-	<div class="container main-content">
-		<div class="row">
-			<?php 
-			 //buddypress
-			 global $bp; 
-			 if($bp && !bp_is_blog_page()) echo '<h1>' . get_the_title() . '</h1>'; ?>
-			
-			<?php if(have_posts()) : while(have_posts()) : the_post(); ?>
-				
-				<?php the_content(); ?>
-	
-			<?php endwhile; endif; ?>
-		</div>
-	</div>
-</div>
+
 <?php // Set up and call our Eventbrite query. ?>
 <?php $events = new Eventbrite_Query( apply_filters( 'eventbrite_query_args', array(
 	'display_private' => true, // boolean
@@ -39,4 +29,4 @@
 	App.start(<?= json_encode($events->posts); ?>);
 </script>
 <?php endif; ?>
-<?php get_footer(); ?>
+<h1><?= dirname(__FILE__) . "/../salient/page.php" ?></h1>
