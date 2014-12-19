@@ -38,7 +38,7 @@ TabsView = Marionette.CollectionView.extend({
   initialize: function() {
     var self;
     self = this;
-    this.$el.find('li > a').each(function(i, el) {
+    return this.$el.find('li > a').each(function(i, el) {
       var $content, $tab, action, eventbrite, param, region, tab, _ref;
       $tab = self.$(el);
       $content = self.$($tab.attr('href')).find('[id^=eventbrite]');
@@ -56,15 +56,12 @@ TabsView = Marionette.CollectionView.extend({
       region[tab.get('param')] = '#' + tab.get('content');
       return App.addRegions(region);
     });
-    return this.collection.each(function(tab) {
-      return console.log(tab.attributes);
-    });
   }
 });
 
 EventView = Marionette.ItemView.extend({
   className: 'eventbrite-event',
-  template: _.template('<span class="eventbrite-list-venue-name">' + '<%= venue.address.city %>, <%= venue.address.region %>' + '</span><br/>' + '<span class="eventbrite-list-start">' + '<%= moment(start.local,moment.ISO_8601).format("MM-DD-YY") %>' + '</span>' + ' | ' + '<a href="?event_id=<%= ID %>">' + '<span class="eventbrite-list-sign-up">' + 'Sign Up' + '</span>' + '</a>')
+  template: _.template('<span class="eventbrite-list-venue-name">' + '<%= venue.address.city %>, <%= venue.address.region %>' + '</span><br/>' + '<span class="eventbrite-list-start">' + '<%= moment(start.local,moment.ISO_8601).format("MM-DD-YY") %>' + '</span>' + ' | ' + '<a href="/event/?event_id=<%= ID %>">' + '<span class="eventbrite-list-sign-up">' + 'View Details' + '</span>' + '</a>')
 });
 
 ThirdColumnView = Marionette.CollectionView.extend({
@@ -151,7 +148,6 @@ MapLayout = Marionette.LayoutView.extend({
       styledMap = new google.maps.StyledMapType(styles, {
         name: "color me rad"
       });
-      console.log(this.$('#map-canvas').attr('height'));
       this.map = new google.maps.Map(this.$('#map-canvas')[0], {
         zoom: 4,
         center: new google.maps.LatLng(37.09024, -95.712891),

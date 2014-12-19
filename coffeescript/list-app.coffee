@@ -51,9 +51,6 @@ TabsView = Marionette.CollectionView.extend
 			region[tab.get('param')] = '#' + tab.get('content')
 			App.addRegions region
 
-		@collection.each (tab) ->
-
-			console.log tab.attributes
 	# childViewOptions: (child) ->
 
 
@@ -65,9 +62,9 @@ EventView = Marionette.ItemView.extend
 		'<span class="eventbrite-list-start">' + 
 			'<%= moment(start.local,moment.ISO_8601).format("MM-DD-YY") %>' + 
 		'</span>' + ' | ' +
-		'<a href="?event_id=<%= ID %>">' + 
+		'<a href="/event/?event_id=<%= ID %>">' + 
 			'<span class="eventbrite-list-sign-up">' + 
-				'Sign Up' + 
+				'View Details' + 
 			'</span>' + 
 		'</a>'
 	# initialize: ->
@@ -135,7 +132,6 @@ MapLayout = Marionette.LayoutView.extend
 
 		if _.isUndefined(@map)
 			styledMap = new google.maps.StyledMapType styles, { name: "color me rad" }
-			console.log @$('#map-canvas').attr('height')
 			@map = new google.maps.Map @$('#map-canvas')[0],
 				zoom: 4
 				center: new google.maps.LatLng(37.09024, -95.712891);
